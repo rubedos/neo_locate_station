@@ -8,7 +8,7 @@ locator::locator()
 
 	LaserScan_sub = n.subscribe("/sick_s300/scan_filtered", 2, &locator::LaserScannerCallback, this);
 	Odom_sub = n.subscribe("/odom", 1, &locator::OdomCallback, this);
-	service = n.advertiseService("locate_station", &locator::locateServiceCallback, this);
+	service = n.advertiseService("/locate_station", &locator::locateServiceCallback, this);
 	// publisher
 	if(visualize == true)
 	{
@@ -29,6 +29,16 @@ locator::locator()
 locator::~locator(){}
 bool locator::getparams()
 {
+	if(n.hasParam("unique_id"))
+	{
+	        n.getParam("unique_id", m_unique_id);
+	        ROS_INFO("unique_id loaded from Parameter-Server is: %s", m_unique_id.c_str());
+	}
+	else
+	{
+	        m_unique_id = std::string("");
+	        ROS_WARN("No parameter unique_id on Parameter-Server.");
+	}
 	//visualize
 	if(n.hasParam("visualize"))
 	{
@@ -37,7 +47,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		visualize = true;
+	        visualize = true;
 	        ROS_WARN("No parameter visualize on Parameter-Server. Using default: true");
 	}
 	//x_threshold
@@ -48,7 +58,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		x_threshold = 0.035;
+	        x_threshold = 0.035;
 	        ROS_WARN("No parameter x_threshold on Parameter-Server. Using default: %f", x_threshold);
 	}
 	//y_threshold
@@ -59,7 +69,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		y_threshold = 0.035;
+	        y_threshold = 0.035;
 	        ROS_WARN("No parameter y_threshold on Parameter-Server. Using default: %f", y_threshold);
 	}
 	//nr_of_tries
@@ -70,7 +80,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		nr_of_tries = 5;
+	        nr_of_tries = 5;
 	        ROS_WARN("No parameter nr_of_tries on Parameter-Server. Using default: %i", nr_of_tries);
 	}
 	//min_points
@@ -81,8 +91,19 @@ bool locator::getparams()
 	}
 	else
 	{
-		min_points = 5;
+	        min_points = 5;
 	        ROS_WARN("No parameter min_points on Parameter-Server. Using default: %i", min_points);
+	}
+	//max_points
+	if(n.hasParam("max_points"))
+	{
+	        n.getParam("max_points", max_points);
+	        ROS_INFO("max_points loaded from Parameter-Server is: %i", max_points);
+	}
+	else
+	{
+	        max_points = 50;
+	        ROS_WARN("No parameter min_points on Parameter-Server. Using default: %i", max_points);
 	}
 	//version
 	if(n.hasParam("version"))
@@ -92,7 +113,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		version_charging_station = 2;
+	        version_charging_station = 2;
 	        ROS_WARN("No parameter version on Parameter-Server. Using default: %i", version_charging_station);
 	}
 	//dist_pre_goal
@@ -103,7 +124,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		dist_pre_goal = 0.75;
+	        dist_pre_goal = 0.75;
 	        ROS_WARN("No parameter dist_pre_goal on Parameter-Server. Using default: %f", dist_pre_goal);
 	}
 	//dist_goal
@@ -114,8 +135,19 @@ bool locator::getparams()
 	}
 	else
 	{
-		dist_goal = 0.48;
+	        dist_goal = 0.48;
 	        ROS_WARN("No parameter dist_goal on Parameter-Server. Using default: %f", dist_goal);
+	}
+	//goal_offset_y
+	if(n.hasParam("goal_offset_y"))
+	{
+	        n.getParam("goal_offset_y", goal_offset_y);
+	        ROS_INFO("goal_offset_y loaded from Parameter-Server is: %f", goal_offset_y);
+	}
+	else
+	{
+	        goal_offset_y = 0.0;
+	        ROS_WARN("No parameter goal_offset_y on Parameter-Server. Using default: %f", goal_offset_y);
 	}
 	//approach_velocity
 	if(n.hasParam("approach_velocity"))
@@ -125,7 +157,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		vel = 0.05;
+	        vel = 0.05;
 	        ROS_WARN("No parameter approach_velocity on Parameter-Server. Using default: %f", vel);
 	}
 	//dist_points_min
@@ -136,7 +168,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		dist_points_min = 0.38;  
+	        dist_points_min = 0.38;  
 	        ROS_WARN("No parameter dist_points_min on Parameter-Server. Using default: %f", dist_points_min);
 	}
 	//dist_points_max
@@ -147,7 +179,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		dist_points_max = 0.41;
+	        dist_points_max = 0.41;
 	        ROS_WARN("No parameter dist_points_max on Parameter-Server. Using default: %f", dist_points_max);
 	}
 	//high_min
@@ -169,7 +201,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		high_max = 0.09;	
+	        high_max = 0.09;	
 	        ROS_WARN("No parameter high_max on Parameter-Server. Using default: %f", high_max);
 	}
 	//minimal_number_found
@@ -180,7 +212,7 @@ bool locator::getparams()
 	}
 	else
 	{
-		minimal_number_found = 12;	
+	        minimal_number_found = 12;
 	        ROS_WARN("No parameter min_nr_found on Parameter-Server. Using default: %i", minimal_number_found);
 	}
 	//average_calculation_number
@@ -193,6 +225,39 @@ bool locator::getparams()
 	{
 		average_calculation_number = 40;	
 	        ROS_WARN("No parameter average_calculation_number on Parameter-Server. Using default: %i", average_calculation_number);
+	}
+	//min_intensity
+	if(n.hasParam("min_intensity"))
+	{
+	        n.getParam("min_intensity", min_intensity);
+	        ROS_INFO("min_intensity loaded from Parameter-Serveris %i", min_intensity);
+	}
+	else
+	{
+	        min_intensity = 0;	
+	        ROS_WARN("No parameter min_intensity on Parameter-Server. Using default: %i", min_intensity);
+	}
+	//use_angle_adjust
+	if(n.hasParam("use_angle_adjust"))
+	{
+	        n.getParam("use_angle_adjust", use_angle_adjust);
+	        ROS_INFO("use_angle_adjust loaded from Parameter-Server");
+	}
+	else
+	{
+	        use_angle_adjust = false;	
+	        ROS_WARN("No parameter use_angle_adjust on Parameter-Server. Using default: false");
+	}
+	//stop_laser_dist_threshold
+	if(n.hasParam("stop_laser_dist_threshold"))
+	{
+	        n.getParam("stop_laser_dist_threshold", stop_laser_dist_threshold);
+	        ROS_INFO("stop_laser_dist_threshold loaded from Parameter-Server");
+	}
+	else
+	{
+	        stop_laser_dist_threshold = 0.05;	
+	        ROS_WARN("No parameter stop_laser_dist_threshold on Parameter-Server. Using default: %f", stop_laser_dist_threshold);
 	}
 	return true;
 }
@@ -215,9 +280,11 @@ void locator::LaserScannerCallback(const sensor_msgs::LaserScan::ConstPtr& scan_
 {
 	if(!searching_station)
 	{
-		current_scan_msg = *scan_in;
+		//current_scan_msg = *scan_in;
 		new_laserscan_available = true;
 	}
+        // TODO
+        current_scan_msg = *scan_in;
 }
 
 //Service Callback
@@ -260,7 +327,10 @@ bool locator::locateServiceCallback(std_srvs::Empty::Request& request, std_srvs:
 }
 int locator::move_forward_slow(double distance, geometry_msgs::PointStamped pGoal)
 {
+	ROS_INFO("move_forward_slow");
 	
+	std::vector<geometry_msgs::Polygon> polygons;
+
 	geometry_msgs::Twist cmd_vel;
 	double act_distance = 0.0;
 
@@ -273,7 +343,7 @@ int locator::move_forward_slow(double distance, geometry_msgs::PointStamped pGoa
 	cmd_vel.angular.x = 0.0;
 	cmd_vel.angular.y = 0.0;
 	cmd_vel.angular.z = 0.0;
-	topicPub_vel.publish(cmd_vel);
+	//topicPub_vel.publish(cmd_vel);
 	if(visualize == true)
 	{
 		topicPub_foot_point.publish(pGoal);
@@ -287,24 +357,64 @@ int locator::move_forward_slow(double distance, geometry_msgs::PointStamped pGoa
 		{
 			ros::spinOnce();
 		}while(new_odom_available == false);
+
+		cmd_vel.linear.x = 0.0;
+		cmd_vel.linear.y = 0.0;
+		cmd_vel.linear.z = 0.0;
+		//angular vel
+		cmd_vel.angular.x = 0.0;
+		cmd_vel.angular.y = 0.0;
+		cmd_vel.angular.z = 0.0;
+
+		
+		// Check angle between two reflecting polygons and rotate robot accordingly
+		if (use_angle_adjust)
+		{
+			ROS_DEBUG_STREAM("Entered angle adjust");
+			double pointDiff = convert_reflecting_laserscan_to_polygons(&polygons);
+			if (pointDiff < -0.015)
+				cmd_vel.angular.z = -vel;
+			else if (pointDiff > 0.015)
+				cmd_vel.angular.z = vel;
+			else
+				cmd_vel.linear.x = vel;
+		}
+		else
+			cmd_vel.linear.x = vel;
+
+		// Laser distance check for safety
+		if (use_angle_adjust)
+		{
+			ROS_DEBUG_STREAM("Entered laser dist check");
+			if (farestPointX < stop_laser_dist_threshold)
+			{
+				cmd_vel.linear.x = 0.0;
+				//publish cmd_vel
+				topicPub_vel.publish(cmd_vel);
+				return 4;
+			}
+		}
+
+		//publish cmd_vel
+		topicPub_vel.publish(cmd_vel);
 	
 		//calculate distance between these two vectors
 		geometry_msgs::Point32 p1_tmp; //convert geometry_msgs::PointStamped in geometry_msgs::Point32, because calc_dist_point_to_point accepts only geometry_msgs::Point32!
 		geometry_msgs::Point32 p2_tmp;
 		//P1
 		p1_tmp.x = pGoal.point.x;
-		p1_tmp.y = pGoal.point.y;
+		p1_tmp.y = pGoal.point.y + goal_offset_y;
 		p1_tmp.z = pGoal.point.z;
 		//P2
 		p2_tmp.x = act_position.point.x;
 		p2_tmp.y = act_position.point.y;
 		p2_tmp.z = pGoal.point.z; //set both points to same high
 		act_distance = my_math_tb.calc_dist_point_to_point(p1_tmp, p2_tmp);
-		//ROS_INFO("act_dist: %f", act_distance);
+		ROS_INFO("act_dist: %f", act_distance);
 		if(visualize == true)
 		{
 			act_position.header.stamp = ros::Time::now();
-			act_position.header.frame_id = "/odom";
+			act_position.header.frame_id = m_unique_id + "/odom";
 			topicPub_foot_point.publish(act_position);
 		}
 	
@@ -332,7 +442,7 @@ int locator::move_forward_slow(double distance, geometry_msgs::PointStamped pGoa
 int locator::move_to_charging_station(double distance, geometry_msgs::PointStamped *pGoal)
 {
 	//states:
-	//0 = Charging statoin not found in polygons
+	//0 = Charging station not found in polygons
 	//1 = Calculation error
 	//2 = Goal not reached at all or not reached in 30sec
 	//3 = Goal reached!
@@ -375,7 +485,12 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 
 	MoveBaseClient ac("move_base", true);
 	ROS_INFO("Waiting for move_base server...");
-	ac.waitForServer();
+	// Wait for the action server to come up
+	while (!ac.waitForServer(ros::Duration(5.0)))
+	{
+	  ROS_WARN("Action server not started yet. Waiting...");
+	}
+
 	ROS_INFO("move_base server online!");
 
 	//---------------------------------------------
@@ -395,8 +510,8 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 		{
 			switch(version_charging_station)
 			{
-				case 1: found_polygon = find_station_V1_in_poylgons(&polygons, &nr_of_found_polygon, &nr_of_point); break;
-				case 2: found_polygon = find_station_V2_in_poylgons(&polygons, &nr_of_found_polygon, &nr_of_point); break;
+				case 1: found_polygon = find_station_V1_in_polygons(&polygons, &nr_of_found_polygon, &nr_of_point); break;
+				case 2: found_polygon = find_station_V2_in_polygons(&polygons, &nr_of_found_polygon, &nr_of_point); break;
 				default: return 90;
 			}
 			if(found_polygon == true)
@@ -453,18 +568,18 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 		//	->der Abstand zum errechneten Punkt darf nicht größer als der zu pC sein,
 		//	  sonst liegt der Punkt auf der falschen seite
 		// transform act_position from pointstamped to point32
-		//geometry_msgs::Point32 p_act_tmp;
-		//p_act_tmp.x = act_position.point.x;
-		//p_act_tmp.y = act_position.point.y;
-		//p_act_tmp.z = pC.z; //damit beide auf gleicher höhe sind
-		//ROS_INFO("pC.x = %f ------  pC.y = %f",pC.x,pC.y);
-		//ROS_INFO("goal_point.x = %f ------  goal_point.y = %f",goal_point.x,goal_point.y);
-		//ROS_INFO("Dist Act to goal: %f", sqrt(pow(goal_point.x,2)+pow(goal_point.y,2)));
-		//ROS_INFO("Dist Act to pC: %f", sqrt(pow(pC.x,2)+pow(pC.y,2)));
+		geometry_msgs::Point32 p_act_tmp;
+		p_act_tmp.x = act_position.point.x;
+		p_act_tmp.y = act_position.point.y;
+		p_act_tmp.z = pC.z; //damit beide auf gleicher höhe sind
+		ROS_INFO("pC.x = %f ------  pC.y = %f",pC.x,pC.y);
+		ROS_INFO("goal_point.x = %f ------  goal_point.y = %f",goal_point.x,goal_point.y);
+		ROS_INFO("Dist Act to goal: %f", sqrt(pow(goal_point.x,2)+pow(goal_point.y,2)));
+		ROS_INFO("Dist Act to pC: %f", sqrt(pow(pC.x,2)+pow(pC.y,2)));
 		if(sqrt(pow(goal_point.x,2)+pow(goal_point.y,2)) < sqrt(pow(pC.x,2)+pow(pC.y,2)))
 		{
-			//ROS_INFO("Dist Act to goal: %f", my_math_tb.calc_dist_point_to_point(p_act_tmp, goal_point));
-                	//ROS_INFO("Dist Act to pC: %f", my_math_tb.calc_dist_point_to_point(p_act_tmp, pC));
+			ROS_INFO("Dist Act to goal: %f", my_math_tb.calc_dist_point_to_point(p_act_tmp, goal_point));
+			ROS_INFO("Dist Act to pC: %f", my_math_tb.calc_dist_point_to_point(p_act_tmp, pC));
 		}
 		else
 		{
@@ -480,7 +595,7 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 		state = 2;
 		//transform pGoal from /base_link frame to /odom frame
 		pC_odom.header.stamp = ros::Time::now();
-                pC_odom.header.frame_id = "/base_link";
+		pC_odom.header.frame_id = m_unique_id + "/base_link";
                 pC_odom.point.x = pC.x;
                 pC_odom.point.y = pC.y;
                 pC_odom.point.z = 0.0;
@@ -488,9 +603,9 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
                 try
                 {
                         //wait for transform from base_link to odom
-                        listener.waitForTransform("/odom", pC_odom.header.frame_id, pC_odom.header.stamp, ros::Duration(3.0));
+                        listener.waitForTransform(m_unique_id + "/odom", pC_odom.header.frame_id, pC_odom.header.stamp, ros::Duration(3.0));
                         //transform
-                        listener.transformPoint("/odom", pC_odom, *pGoal);
+                        listener.transformPoint(m_unique_id + "/odom", pC_odom, *pGoal);
 
                 }
                 catch(tf::TransformException ex){
@@ -513,7 +628,7 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 
 			//Goalpose-------------------------------------
 			pose_stamp.header.stamp = ros::Time::now();
-			pose_stamp.header.frame_id = "/base_link";
+			pose_stamp.header.frame_id = m_unique_id + "/base_link";
 			pose_stamp.pose.position.x = goal_point.x;
 			pose_stamp.pose.position.y = goal_point.y;
 			pose_stamp.pose.position.z = goal_point.z;
@@ -526,7 +641,7 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 
 			//CROSS-Point-------------------------------------
 			foot_point_stamp.header.stamp = ros::Time::now();
-			foot_point_stamp.header.frame_id = "/base_link";
+			foot_point_stamp.header.frame_id = m_unique_id + "/base_link";
 			foot_point_stamp.point.x = cross_point.x;
 			foot_point_stamp.point.y = cross_point.y;
 			foot_point_stamp.point.z = polygons.at(0).points.at(0).z;
@@ -535,7 +650,7 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 
 			//Goal-Point-------------------------------------
 			first_goal_point_stamp.header.stamp = ros::Time::now();
-			first_goal_point_stamp.header.frame_id = "/base_link";
+			first_goal_point_stamp.header.frame_id = m_unique_id + "/base_link";
 			first_goal_point_stamp.point.x = goal_point.x;
 			first_goal_point_stamp.point.y = goal_point.y;
 			first_goal_point_stamp.point.z = goal_point.z;
@@ -544,7 +659,7 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 
 			//Most-Dist-Point-------------------------------------
 			point_stamp.header.stamp = ros::Time::now();
-			point_stamp.header.frame_id = "/base_link";
+			point_stamp.header.frame_id = m_unique_id + "/base_link";
 			point_stamp.point.x = pC.x;
 			point_stamp.point.y = pC.y;
 			point_stamp.point.z = pC.z;	
@@ -553,7 +668,7 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 
 			//Polygon---------------------------------------------
 			poly_stamp.header.stamp = ros::Time::now();
-			poly_stamp.header.frame_id = "/base_link";
+			poly_stamp.header.frame_id = m_unique_id + "/base_link";
 			poly_stamp.polygon = polygons.at(nr_of_found_polygon);
 			topicPub_polygon.publish(poly_stamp);
 			//---------------------------------------------------
@@ -561,10 +676,10 @@ int locator::move_to_charging_station(double distance, geometry_msgs::PointStamp
 		//----------------------------------------------------------------------
 //3. publish Goal and wait for move_base to get there
 		//3.1 create Goal
-		goal.target_pose.header.frame_id = "/base_link";
+		goal.target_pose.header.frame_id = m_unique_id + "/base_link";
 		goal.target_pose.header.stamp = ros::Time::now();
 		goal.target_pose.pose.position.x = goal_point.x;
-		goal.target_pose.pose.position.y = goal_point.y;
+		goal.target_pose.pose.position.y = goal_point.y + goal_offset_y;
 		goal.target_pose.pose.position.z = 0.0;
 		goal.target_pose.pose.orientation = odom_quat;
 
@@ -603,10 +718,11 @@ void locator::add_angle_to_quaternion(double angle, geometry_msgs::Quaternion *o
 	odom_quat->w = odom_geo_tmp.w;
 	
 }
-bool locator::find_station_V2_in_poylgons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point)
+bool locator::find_station_V2_in_polygons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point)
 {
 	//transform laserscan to pointcloud and collect points to polygons
 	convert_reflecting_laserscan_to_polygons(polygons);
+	//convert_laserscan_to_polygons(polygons);
 	
 	//Prüfe jedes Polygon, ob es unser gesuchtes sein kann.
 	/*Vorgehensweise:	1. Prüfe ob das aktuelle Polygon und das folgende Polygon jeweils mindestens 5 punkte enthalten
@@ -621,15 +737,16 @@ bool locator::find_station_V2_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 	for(int z = 0; z < polygons->size();z++)
 	{
 		act_polygon.points.clear();
-		//Check if act polygon contains more than min_points points
-		if(polygons->at(z).points.size() > min_points)
+		//Check if act polygon contains more than min_points points and less than max points
+		if(polygons->at(z).points.size() > min_points && polygons->at(z).points.size() < max_points)
 		{
+			ROS_INFO("Point size: %zd", polygons->at(z).points.size());
 			if(visualize == true)
 			{
 				//Polygon---------------------------------------------
 				geometry_msgs::PolygonStamped poly_stamp;
 				poly_stamp.header.stamp = ros::Time::now();
-				poly_stamp.header.frame_id = "/base_link";
+				poly_stamp.header.frame_id = m_unique_id + "/base_link";
 
 				poly_stamp.polygon = polygons->at(z);
 			
@@ -639,11 +756,12 @@ bool locator::find_station_V2_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 			//is there a next polygon?
 			if(z+1 < polygons->size())
 			{
-				if(polygons->at(z+1).points.size() > min_points)
+				if(polygons->at(z+1).points.size() > min_points && polygons->at(z+1).points.size() < max_points)
 				{
-					//Check distance beteween these two points
+                    ROS_INFO("Next polygon point size: %zd", polygons->at(z+1).points.size());
+					//Check distance between these two points
 					dist_point_to_point = my_math_tb.calc_dist_point_to_point(polygons->at(z).points.at(polygons->at(z).points.size()-1), polygons->at(z+1).points.at(0));
-					//ROS_INFO("Act. Dist: %f", dist_point_to_point);
+					ROS_INFO("Act. Dist: %f", dist_point_to_point);
 					if(dist_point_to_point < dist_points_max && dist_point_to_point > dist_points_min)
 					{
 						//ROS_INFO("das ist unser polygon");
@@ -670,7 +788,7 @@ bool locator::find_station_V2_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 	return false;
 	
 }
-bool locator::find_station_V1_in_poylgons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point)
+bool locator::find_station_V1_in_polygons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point)
 {
 	//transform laserscan to pointcloud and collect points to polygons
 	convert_laserscan_to_polygons(polygons);
@@ -690,22 +808,22 @@ bool locator::find_station_V1_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 	
 	for(int z = 0; z < polygons->size();z++)
 	{
-		//Check if act polygon contains more than min_points points
-		if(polygons->at(z).points.size() > min_points)
+		//Check if act polygon contains more than min_points points and less than max points
+		if(polygons->at(z).points.size() > min_points && polygons->at(z).points.size() < max_points)
 		{
 			//Check distance beteween these two points
 			dist_point_to_point = my_math_tb.calc_dist_point_to_point(polygons->at(z).points.at(0), polygons->at(z).points.at(polygons->at(z).points.size()-1));		
-			//ROS_INFO("Distance Point to Point: %f", dist_point_to_point);
+			ROS_INFO("Distance Point to Point: %f", dist_point_to_point);
 			if(dist_point_to_point < dist_points_max && dist_point_to_point > dist_points_min)
 			{
-				//ROS_INFO("Passende distanz in polygon %i gefunden. Abstand: %f", z, dist_point_to_point);
+				ROS_INFO("Matching distance found in polygon %i. Distance: %f", z, dist_point_to_point);
 				*nr_of_polygon = z;
 				if(visualize == true)
 				{
 					//Polygon---------------------------------------------
 					geometry_msgs::PolygonStamped poly_stamp;
 					poly_stamp.header.stamp = ros::Time::now();
-					poly_stamp.header.frame_id = "/base_link";
+					poly_stamp.header.frame_id = m_unique_id + "/base_link";
 
 					poly_stamp.polygon = polygons->at(z);
 			
@@ -718,7 +836,7 @@ bool locator::find_station_V1_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 				for(int g = 0; g < polygons->at(z).points.size(); g++)
 				{	
 					distance_point_to_straight = my_math_tb.calc_dist_point_to_straight(polygons->at(z).points.at(0), polygons->at(z).points.at(polygons->at(z).points.size()-1), polygons->at(z).points.at(g));
-					//ROS_INFO("High: %f", distance_point_to_straight);
+					ROS_INFO("High: %f", distance_point_to_straight);
 					if(distance_point_to_straight > last_dist)
 					{
 						last_dist = distance_point_to_straight;
@@ -734,13 +852,14 @@ bool locator::find_station_V1_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 						//Most-Dist-Point-------------------------------------
 						geometry_msgs::PointStamped point_stamp;
 						point_stamp.header.stamp = ros::Time::now();
-						point_stamp.header.frame_id = "/base_link";
+						point_stamp.header.frame_id = m_unique_id + "/base_link";
 						point_stamp.point.x = polygons->at(z).points.at(*nr_of_point).x;
 						point_stamp.point.y = polygons->at(z).points.at(*nr_of_point).y;
 						point_stamp.point.z = polygons->at(0).points.at(0).z;	
 						topicPub_point.publish(point_stamp);
 						//---------------------------------------------------
 					}
+					ROS_INFO("Polygon found!");
 					found_polygon = true;
 					return found_polygon;
 					//This is the polygon.
@@ -753,7 +872,7 @@ bool locator::find_station_V1_in_poylgons(std::vector<geometry_msgs::Polygon> *p
 	return found_polygon;
 }
 //Find reflecting surfaces in the laserscan and combine them to polygons
-bool locator::convert_reflecting_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> *polygons)
+double locator::convert_reflecting_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> *polygons)
 {
 	int nr_of_polygon = 0;
 	sensor_msgs::PointCloud cloud;
@@ -767,32 +886,51 @@ bool locator::convert_reflecting_laserscan_to_polygons(std::vector<geometry_msgs
 	cloud.header.stamp = current_scan_msg.header.stamp;
 	//Convert Laserscan to Pointcloud
 	try
-      	{
+  	{
 		//transform from laserframe to base_link
-        	listener.waitForTransform("/base_link", current_scan_msg.header.frame_id, current_scan_msg.header.stamp, ros::Duration(3.0));
+		listener.waitForTransform(m_unique_id + "/base_link", current_scan_msg.header.frame_id, current_scan_msg.header.stamp, ros::Duration(3.0));
 
-        	//ROS_DEBUG("now project to point_cloud");
-        	projector.transformLaserScanToPointCloud("/base_link", current_scan_msg, cloud, listener);
-      	}
-      	catch(tf::TransformException ex){
-        	ROS_ERROR("%s",ex.what());
+    	//ROS_DEBUG("now project to point_cloud");
+        projector.transformLaserScanToPointCloud(m_unique_id + "/base_link", current_scan_msg, cloud, listener);
+  	}
+  	catch(tf::TransformException ex)
+  	{
+    	ROS_ERROR("%s",ex.what());
 		return false;
-      	}
+  	}
+
 	int nr_channel = 0; //we only have an intensity channel so its 0
 	int anz_points = cloud.points.size();
-	double default_intensity = 0.0;
+	//double default_intensity = 0.0;
 	int nr_points = 0;
-	//ROS_INFO("default intensity: %f", default_intensity);
+	// Number of points in a polygon between two polygons with high intensity values
+	int nr_points_in_mid = 0;
+	farestPointX = 1.0;
+
 	for(int i = 0; i < anz_points; i++)
 	{
-		if(cloud.channels[nr_channel].values[i] != default_intensity)
+		if(cloud.channels[nr_channel].values[i] > min_intensity)
 		{
+			if (nr_points_in_mid > 0 && polygons->size() == 1)
+			{
+                                ROS_DEBUG_STREAM("Number of points in the middle: " << nr_points_in_mid);
+				for (int i = 0; i < nr_points_in_mid; i++)
+				{
+                                        ROS_DEBUG_STREAM("Polygon in middle point X: " << act_polygon.points.at(i).x);
+					if (farestPointX > act_polygon.points.at(i).x)
+						farestPointX = act_polygon.points.at(i).x;
+				}
+
+				nr_points_in_mid = 0;
+				act_polygon.points.clear();
+			}
+
+			ROS_DEBUG("Intensity: %f", cloud.channels[nr_channel].values[i]);
 			act_point.x = cloud.points[i].x;
 			act_point.y = cloud.points[i].y;
 			act_point.z = cloud.points[i].z;
 			act_polygon.points.push_back(act_point);
 			nr_points++;
-			
 		}
 		else
 		{
@@ -804,15 +942,41 @@ bool locator::convert_reflecting_laserscan_to_polygons(std::vector<geometry_msgs
 				nr_of_polygon++;
 				act_polygon.points.clear();
 				nr_points = 0;
+				nr_points_in_mid = 0;
 			}
-			else
+			else if (nr_points_in_mid == 0 && polygons->size() == 1)
 			{
 				act_polygon.points.clear();
+                                act_point.x = cloud.points[i].x;
+                                act_point.y = cloud.points[i].y;
+                                act_point.z = cloud.points[i].z;
+                                act_polygon.points.push_back(act_point);
+                                nr_points_in_mid++;
+			}
+			else if (polygons->size() == 1)
+			{
+				act_point.x = cloud.points[i].x;
+				act_point.y = cloud.points[i].y;
+				act_point.z = cloud.points[i].z;
+				act_polygon.points.push_back(act_point);
+				nr_points_in_mid++;
 			}
 		}
 	}
 	
-	return true;
+	if (use_angle_adjust)
+	{
+		double firstPointX = polygons->at(0).points.at(0).x;
+		double lastPointX = polygons->at(1).points.at(polygons->at(1).points.size() - 1).x;
+		double pointDepthDiff = firstPointX - lastPointX;
+		ROS_DEBUG_STREAM("Point 1: " << firstPointX);
+                ROS_DEBUG_STREAM("Point 2: " << lastPointX);
+		ROS_DEBUG_STREAM("Point depth difference: " << pointDepthDiff);
+                ROS_DEBUG_STREAM("Farest point X: " << farestPointX);
+		return pointDepthDiff;
+	}
+	else
+		return 0.0;
 }
 //Combine points with a given distance to each other to polygons
 bool locator::convert_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> *polygons)
@@ -830,17 +994,18 @@ bool locator::convert_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> 
 	cloud.header.stamp = current_scan_msg.header.stamp;
 	//Convert Laserscan to Pointcloud
 	try
-      	{
+    {
 		//transform from laserframe to base_link
-        	listener.waitForTransform("/base_link", current_scan_msg.header.frame_id, current_scan_msg.header.stamp, ros::Duration(3.0));
+		listener.waitForTransform(m_unique_id + "/base_link", current_scan_msg.header.frame_id, current_scan_msg.header.stamp, ros::Duration(3.0));
 
-        	//ROS_DEBUG("now project to point_cloud");
-        	projector.transformLaserScanToPointCloud("/base_link", current_scan_msg, cloud, listener);
-      	}
-      	catch(tf::TransformException ex){
-        	ROS_ERROR("%s",ex.what());
+        //ROS_DEBUG("now project to point_cloud");
+        projector.transformLaserScanToPointCloud(m_unique_id + "/base_link", current_scan_msg, cloud, listener);
+    }
+    catch(tf::TransformException ex)
+    {
+        ROS_ERROR("%s",ex.what());
 		return false;
-      	}
+    }
 	//seperate points in cloud to geometry_msgs/Polygon
 	int anz_points = cloud.points.size();
 	int nr_of_point_in_polygon = 0;

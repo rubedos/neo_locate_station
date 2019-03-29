@@ -142,11 +142,11 @@ double math_toolbox::calc_angle_between_two_vectors(geometry_msgs::Point32 p1, g
 {
 	double angle = 0.0; //[°]
 	angle = acos(((p1.x*p2.x)+(p1.y*p2.y)+(p1.z*p2.z))/(sqrt(pow(p1.x,2)+pow(p1.y,2)+pow(p1.z,2))*sqrt(pow(p2.x,2)+pow(p2.y,2)+pow(p2.z,2))));
-	if(isnan(angle))
+	if(std::isnan(angle))
 	{
 		return 0.0;
 	}
-	if(isinf(angle))
+	if(std::isinf(angle))
 	{
 		return 0.0;
 	}
@@ -162,11 +162,11 @@ double math_toolbox::calc_angle_between_vector_and_straight(geometry_msgs::Point
 	pr.y = p1.y-p2.y;
 	pr.z = p1.z-p2.z;
 	angle = acos(((p3.x*pr.x)+(p3.y*pr.y)+(p3.z*pr.z))/(sqrt(pow(p3.x,2)+pow(p3.y,2)+pow(p3.z,2))*sqrt(pow(pr.x,2)+pow(pr.y,2)+pow(pr.z,2))));
-	if(isnan(angle))
+	if(std::isnan(angle))
 	{
 		return 0.0;
 	}
-	if(isinf(angle))
+	if(std::isinf(angle))
 	{
 		return 0.0;
 	}

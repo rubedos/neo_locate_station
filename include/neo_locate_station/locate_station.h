@@ -3,6 +3,7 @@
 
 //standard includes
 //#include <math.h>
+#include <string>
 
 //ROS includes
 #include <ros/ros.h>
@@ -64,10 +65,10 @@ public:
   // laser geometry projector
   laser_geometry::LaserProjection projector;
 
-  //Servicecallback
+  // Servicecallback
   bool locateServiceCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
-  //math_toolbox
+  // math_toolbox
   math_toolbox my_math_tb;
   
 private:
@@ -76,21 +77,27 @@ private:
   void OdomCallback(const nav_msgs::Odometry::ConstPtr& odom_in);
   int move_to_charging_station(double distance, geometry_msgs::PointStamped *pGoal);
   int move_forward_slow(double distance, geometry_msgs::PointStamped pGoal);
-  bool find_station_V1_in_poylgons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point);
-  bool find_station_V2_in_poylgons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point);
+  bool find_station_V1_in_polygons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point);
+  bool find_station_V2_in_polygons(std::vector<geometry_msgs::Polygon> *polygons, int *nr_of_polygon, int *nr_of_point);
   bool convert_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> *polygons);
-  bool convert_reflecting_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> *polygons);
+  double convert_reflecting_laserscan_to_polygons(std::vector<geometry_msgs::Polygon> *polygons);
   void add_angle_to_quaternion(double angle, geometry_msgs::Quaternion *odom_quat);
   
   ros::Subscriber LaserScan_sub;
   ros::Subscriber Odom_sub;  
 
-  sensor_msgs::LaserScan current_scan_msg;  	    //Current Scan Message
-  geometry_msgs::PointStamped act_position;	    //Current Position from Odom
+  // Current Scan Message
+  sensor_msgs::LaserScan current_scan_msg;
+  // Current Position from Odom 	    
+  geometry_msgs::PointStamped act_position;
+
+  // robot unique_id
+  std::string m_unique_id;
 
   bool visualize; 
 
-  bool searching_station; //If true discard new incomming laserscans until last search finished
+  bool searching_station; 
+  // If true discard new incomming laserscans until last search finished
   bool new_laserscan_available;
   bool new_odom_available;
 
@@ -101,17 +108,25 @@ private:
   double x_threshold, y_threshold;
 
   int min_points;
+  int max_points;
   double dist_points_min;
   double dist_points_max;
   double high_min;
   double high_max;
+  int min_intensity;
+  bool use_angle_adjust;
+  double stop_laser_dist_threshold;
 
   double vel;
 
   double dist_pre_goal;
   double dist_goal;
+  double goal_offset_y;
+  // Roll Pitch Yaw
+  double curr_roll, curr_pitch, curr_yaw;
 
-  double curr_roll, curr_pitch, curr_yaw; //Roll Pitch Yaw
+  // Farest point x wise
+  double farestPointX;
 };
 
 
